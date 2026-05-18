@@ -16,6 +16,9 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import org.springframework.context.annotation.Profile;
+
+@Profile("!test")
 @Component
 public class DatabaseSeeder implements CommandLineRunner {
 
