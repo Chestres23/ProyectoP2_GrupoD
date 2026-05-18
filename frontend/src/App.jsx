@@ -6,20 +6,31 @@ import Dashboard from './pages/Dashboard'
 import LostItems from './pages/LostItems'
 import ItemDetail from './pages/ItemDetail'
 import CreateClaim from './pages/CreateClaim'
+import CreateItem from './pages/CreateItem'
+import EditItem from './pages/EditItem'
 import ClaimsPanel from './pages/ClaimsPanel'
+import ProtectedRoute from './components/ProtectedRoute'
+import PublicRoute from './components/PublicRoute'
 
 export default function App(){
   return (
     <Routes>
-      <Route path="/login" element={<Login/>} />
-      <Route path="/" element={<MainLayout/>}>
-        <Route index element={<Dashboard/>} />
-        <Route path="lost" element={<LostItems/>} />
-        <Route path="lost/:id" element={<ItemDetail/>} />
-        <Route path="claim/create/:itemId" element={<CreateClaim/>} />
-        <Route path="claims" element={<ClaimsPanel/>} />
+      <Route element={<PublicRoute/>}>
+        <Route path="/login" element={<Login/>} />
       </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route element={<ProtectedRoute/>}>
+        <Route path="/" element={<MainLayout/>}>
+          <Route index element={<Dashboard/>} />
+          <Route path="objetos" element={<LostItems/>} />
+          <Route path="objetos/nuevo" element={<CreateItem/>} />
+          <Route path="objetos/:id" element={<ItemDetail/>} />
+          <Route path="objetos/:id/editar" element={<EditItem/>} />
+          <Route path="reclamos/nuevo/:itemId" element={<CreateClaim/>} />
+          <Route path="reclamos" element={<ClaimsPanel/>} />
+        </Route>
+      </Route>
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   )
 }
+

@@ -19,6 +19,13 @@ public class LostItem {
     @Column(name = "date_found") private LocalDate dateFound;
     @Column(name = "image_url") private String imageUrl;
 
+    @Lob
+    @Column(name = "image_data", columnDefinition = "LONGBLOB")
+    private byte[] imageData;
+
+    @Column(name = "image_type", length = 60)
+    private String imageType;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ItemStatus status = ItemStatus.FOUND;
@@ -91,6 +98,22 @@ public class LostItem {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public byte[] getImageData() {
+        return imageData;
+    }
+
+    public void setImageData(byte[] imageData) {
+        this.imageData = imageData;
+    }
+
+    public String getImageType() {
+        return imageType;
+    }
+
+    public void setImageType(String imageType) {
+        this.imageType = imageType;
     }
 
     public Boolean getActive() {

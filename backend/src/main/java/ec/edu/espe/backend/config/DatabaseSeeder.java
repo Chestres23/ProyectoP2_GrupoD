@@ -1,8 +1,11 @@
 package ec.edu.espe.backend.config;
 
 import ec.edu.espe.backend.domain.LostItem;
+import ec.edu.espe.backend.domain.Claim;
 import ec.edu.espe.backend.domain.User;
+import ec.edu.espe.backend.domain.enums.ClaimStatus;
 import ec.edu.espe.backend.domain.enums.ItemStatus;
+import ec.edu.espe.backend.repository.ClaimRepository;
 import ec.edu.espe.backend.repository.LostItemRepository;
 import ec.edu.espe.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +24,9 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     @Autowired
     private LostItemRepository lostItemRepository;
+
+    @Autowired
+    private ClaimRepository claimRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -80,6 +86,13 @@ public class DatabaseSeeder implements CommandLineRunner {
 
             lostItemRepository.save(item1);
             lostItemRepository.save(item2);
+
+            Claim claim = new Claim();
+            claim.setUser(admin);
+            claim.setItem(item1);
+            claim.setObservation("Reclamo de prueba para validar el módulo de claims.");
+            claim.setStatus(ClaimStatus.PENDING);
+            claimRepository.save(claim);
 
             System.out.println("✅ Seeder completado: Usuarios y Objetos Perdidos creados exitosamente.");
         }

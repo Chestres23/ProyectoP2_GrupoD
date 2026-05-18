@@ -1,6 +1,6 @@
-# CampusLost - Frontend (mock)
+# CampusLost - Frontend
 
-Estructura inicial del frontend con Vite + React + Tailwind. Datos mock en `src/mocks/mockData.js`.
+Frontend con Vite + React + Tailwind, conectado al backend de Spring Boot cuando está disponible. Si el backend no responde, algunas vistas siguen mostrando datos mock locales para no romper la interfaz.
 
 Instalación y ejecución:
 
@@ -11,5 +11,7 @@ npm run dev
 ```
 
 Notas:
-- Por ahora NO hay conexión al backend.
-- El objetivo es la UI/UX del módulo de Reclamos (Claims).
+- El backend base debe estar corriendo en `http://localhost:8080`.
+- El frontend consume la API en `http://localhost:8080/api` por defecto.
+- Para probar login usa los usuarios sembrados por backend, por ejemplo `admin@test.com` / `123` o `user@test.com` / `123`.
+- El objetivo principal sigue siendo el módulo de Reclamos (Claims).

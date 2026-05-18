@@ -12,7 +12,9 @@ public class LostItemResponseDTO {
     private LocalDate dateFound;
     private ItemStatus status;
     private String imageUrl;
+    private boolean hasImage;
     private String reporterName;
+    private Long reporterId;
 
     //Getters y Setters
 
@@ -86,5 +88,21 @@ public class LostItemResponseDTO {
 
     public void setReporterName(String reporterName) {
         this.reporterName = reporterName;
+    }
+
+    public Long getReporterId() {
+        return reporterId;
+    }
+
+    public void setReporterId(Long reporterId) {
+        this.reporterId = reporterId;
+    }
+
+    public boolean isHasImage() {
+        return hasImage;
+    }
+
+    public void setHasImage(boolean hasImage) {
+        this.hasImage = hasImage;
     }
 }

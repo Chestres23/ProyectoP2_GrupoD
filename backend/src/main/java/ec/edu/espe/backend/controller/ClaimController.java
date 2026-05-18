@@ -2,16 +2,12 @@ package ec.edu.espe.backend.controller;
 
 import ec.edu.espe.backend.dto.ClaimRequestDTO;
 import ec.edu.espe.backend.dto.ClaimResponseDTO;
-import ec.edu.espe.backend.domain.User;
 import ec.edu.espe.backend.service.ClaimService;
-import ec.edu.espe.backend.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
-import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -19,40 +15,37 @@ import java.util.List;
 public class ClaimController {
 
     private final ClaimService claimService;
-    private final UserService userService;
 
-    public ClaimController(ClaimService claimService, UserService userService) {
+    public ClaimController(ClaimService claimService) {
         this.claimService = claimService;
-        this.userService = userService;
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-    public ResponseEntity<ClaimResponseDTO> create(@RequestBody @Valid ClaimRequestDTO dto, Principal principal){
-        User user = userService.findByEmail(principal.getName())
-                .orElseThrow(() -> new IllegalArgumentException("Usuario autenticado no encontrado"));
-        Long userId = user.getId();
-        ClaimResponseDTO created = claimService.create(dto, userId);
-        return ResponseEntity.created(URI.create("/claims/" + created.getId())).body(created);
+    public ResponseEntity<ClaimResponseDTO> create(@Valid @RequestBody ClaimRequestDTO request) {
+        return ResponseEntity.status(201).body(claimService.createClaim(request));
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-    public ResponseEntity<List<ClaimResponseDTO>> list(){
+    public ResponseEntity<List<ClaimResponseDTO>> getAll() {
         return ResponseEntity.ok(claimService.findAll());
     }
 
-    @PatchMapping("/{id}/approve")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> approve(@PathVariable Long id){
-        claimService.approve(id);
-        return ResponseEntity.noContent().build();
+    @PatchMapping("/{id}/approve")
+    public ResponseEntity<ClaimResponseDTO> approve(@PathVariable Long id) {
+        return ResponseEntity.ok(claimService.approve(id));
     }
 
-    @PatchMapping("/{id}/reject")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> reject(@PathVariable Long id){
-        claimService.reject(id);
+    @PatchMapping("/{id}/reject")
+    public ResponseEntity<ClaimResponseDTO> reject(@PathVariable Long id) {
+        return ResponseEntity.ok(claimService.reject(id));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteClaim(@PathVariable Long id) {
+        claimService.deleteClaim(id);
         return ResponseEntity.noContent().build();
     }
 }

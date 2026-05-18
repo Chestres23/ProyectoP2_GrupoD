@@ -6,8 +6,13 @@ import ec.edu.espe.backend.dto.ClaimResponseDTO;
 import java.util.List;
 
 public interface ClaimService {
-    ClaimResponseDTO create(ClaimRequestDTO dto, Long userId);
+    ClaimResponseDTO createClaim(ClaimRequestDTO request);
+
     List<ClaimResponseDTO> findAll();
-    void approve(Long id);
-    void reject(Long id);
+
+    ClaimResponseDTO approve(Long id);
+
+    ClaimResponseDTO reject(Long id);
+
+    void deleteClaim(Long id);
 }

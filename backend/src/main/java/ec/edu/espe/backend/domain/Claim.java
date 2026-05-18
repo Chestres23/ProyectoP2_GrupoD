@@ -1,6 +1,8 @@
 package ec.edu.espe.backend.domain;
 
+import ec.edu.espe.backend.domain.enums.ClaimStatus;
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -14,56 +16,112 @@ public class Claim {
     @Column(name = "claim_date", nullable = false)
     private LocalDateTime claimDate;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String observation;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private ClaimStatus status = ClaimStatus.PENDING;
-
-    // We store item reference as id for now (LostItem entity not implemented yet)
-    @Column(name = "item_id", nullable = false)
-    private Long itemId;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
 
     @Column(nullable = false)
     private Boolean active = true;
 
-    @Column(name = "created_at")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "item_id", nullable = false)
+    private LostItem item;
+
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public Claim() {}
+    @PrePersist
+    protected void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        claimDate = now;
+        createdAt = now;
+        updatedAt = now;
+    }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 
-    public LocalDateTime getClaimDate() { return claimDate; }
-    public void setClaimDate(LocalDateTime claimDate) { this.claimDate = claimDate; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getObservation() { return observation; }
-    public void setObservation(String observation) { this.observation = observation; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public ClaimStatus getStatus() { return status; }
-    public void setStatus(ClaimStatus status) { this.status = status; }
+    public LocalDateTime getClaimDate() {
+        return claimDate;
+    }
 
-    public Long getItemId() { return itemId; }
-    public void setItemId(Long itemId) { this.itemId = itemId; }
+    public void setClaimDate(LocalDateTime claimDate) {
+        this.claimDate = claimDate;
+    }
 
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
+    public String getObservation() {
+        return observation;
+    }
 
-    public Boolean getActive() { return active; }
-    public void setActive(Boolean active) { this.active = active; }
+    public void setObservation(String observation) {
+        this.observation = observation;
+    }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public ClaimStatus getStatus() {
+        return status;
+    }
 
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public void setStatus(ClaimStatus status) {
+        this.status = status;
+    }
+
+    public Boolean getActive() {
+        return active;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public LostItem getItem() {
+        return item;
+    }
+
+    public void setItem(LostItem item) {
+        this.item = item;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }
