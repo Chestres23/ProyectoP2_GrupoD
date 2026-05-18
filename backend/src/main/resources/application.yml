@@ -17,7 +17,7 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
 
-  jackson:
+  Jackson:
     date-format: yyyy-MM-dd
     time-zone: America/Guayaquil
 
