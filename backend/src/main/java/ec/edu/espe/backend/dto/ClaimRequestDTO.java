@@ -39,4 +39,6 @@ public class ClaimRequestDTO {
     public void setObservation(String observation) {
         this.observation = observation;
     }
+
+
 }
