@@ -3,6 +3,7 @@ name: Rollback - Render
 on:
   workflow_run:
     workflows: ["CD - Deploy to Render"]
+    branches: [main]
     types:
       - completed
 

@@ -3,6 +3,7 @@ package ec.edu.espe.backend.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ec.edu.espe.backend.dto.ClaimRequestDTO;
 import ec.edu.espe.backend.dto.ClaimResponseDTO;
+import ec.edu.espe.backend.domain.enums.ClaimStatus;
 import ec.edu.espe.backend.service.ClaimService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,9 +19,10 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.mockito.BDDMockito.willDoNothing;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -79,5 +81,43 @@ public class ClaimControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].id").value(10L));
+    }
+
+    @Test
+    void shouldApproveClaimAndReturnOk() throws Exception {
+        ClaimResponseDTO response = new ClaimResponseDTO();
+        response.setId(5L);
+        response.setStatus(ClaimStatus.APPROVED);
+        response.setObservation("Reclamo aprobado");
+
+        given(claimService.approve(eq(5L))).willReturn(response);
+
+        mockMvc.perform(patch("/claims/5/approve"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(5L))
+                .andExpect(jsonPath("$.status").value("APPROVED"));
+    }
+
+    @Test
+    void shouldRejectClaimAndReturnOk() throws Exception {
+        ClaimResponseDTO response = new ClaimResponseDTO();
+        response.setId(6L);
+        response.setStatus(ClaimStatus.REJECTED);
+        response.setObservation("Reclamo rechazado");
+
+        given(claimService.reject(eq(6L))).willReturn(response);
+
+        mockMvc.perform(patch("/claims/6/reject"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(6L))
+                .andExpect(jsonPath("$.status").value("REJECTED"));
+    }
+
+    @Test
+    void shouldDeleteClaimAndReturnNoContent() throws Exception {
+        willDoNothing().given(claimService).deleteClaim(eq(7L));
+
+        mockMvc.perform(delete("/claims/7"))
+                .andExpect(status().isNoContent());
     }
 }
