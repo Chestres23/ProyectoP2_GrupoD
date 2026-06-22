@@ -1,127 +1,74 @@
 package ec.edu.espe.backend.domain;
 
-import ec.edu.espe.backend.domain.enums.ClaimStatus;
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.relational.core.mapping.Column;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "claims")
+/**
+ * Entidad de reclamo para R2DBC.
+ * Las FKs son IDs directos (Long) ya que R2DBC no tiene relaciones ORM.
+ */
+@Table("claims")
 public class Claim {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "claim_date", nullable = false)
+    @Column("claim_date")
     private LocalDateTime claimDate;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
     private String observation;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private ClaimStatus status = ClaimStatus.PENDING;
+    // Se almacena como String; se convierte a/de ClaimStatus en servicio
+    private String status;
 
-    @Column(nullable = false)
-    private Boolean active = true;
+    private Boolean active;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    // FKs directas
+    @Column("user_id")
+    private Long userId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "item_id", nullable = false)
-    private LostItem item;
+    @Column("item_id")
+    private Long itemId;
 
-    @Column(name = "created_at", updatable = false)
+    @Column("created_at")
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @Column("updated_at")
     private LocalDateTime updatedAt;
 
-    @PrePersist
-    protected void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
-        claimDate = now;
-        createdAt = now;
-        updatedAt = now;
+    public Claim() {
+        this.status = "PENDING";
+        this.active = true;
     }
 
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
+    // Getters y Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public Long getId() {
-        return id;
-    }
+    public LocalDateTime getClaimDate() { return claimDate; }
+    public void setClaimDate(LocalDateTime claimDate) { this.claimDate = claimDate; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getObservation() { return observation; }
+    public void setObservation(String observation) { this.observation = observation; }
 
-    public LocalDateTime getClaimDate() {
-        return claimDate;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public void setClaimDate(LocalDateTime claimDate) {
-        this.claimDate = claimDate;
-    }
+    public Boolean getActive() { return active; }
+    public void setActive(Boolean active) { this.active = active; }
 
-    public String getObservation() {
-        return observation;
-    }
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
 
-    public void setObservation(String observation) {
-        this.observation = observation;
-    }
+    public Long getItemId() { return itemId; }
+    public void setItemId(Long itemId) { this.itemId = itemId; }
 
-    public ClaimStatus getStatus() {
-        return status;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public void setStatus(ClaimStatus status) {
-        this.status = status;
-    }
-
-    public Boolean getActive() {
-        return active;
-    }
-
-    public void setActive(Boolean active) {
-        this.active = active;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public LostItem getItem() {
-        return item;
-    }
-
-    public void setItem(LostItem item) {
-        this.item = item;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

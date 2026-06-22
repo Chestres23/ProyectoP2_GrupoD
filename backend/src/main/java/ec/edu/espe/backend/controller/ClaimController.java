@@ -4,11 +4,10 @@ import ec.edu.espe.backend.dto.ClaimRequestDTO;
 import ec.edu.espe.backend.dto.ClaimResponseDTO;
 import ec.edu.espe.backend.service.ClaimService;
 import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/claims")
@@ -21,31 +20,29 @@ public class ClaimController {
     }
 
     @PostMapping
-    public ResponseEntity<ClaimResponseDTO> create(@Valid @RequestBody ClaimRequestDTO request) {
-        return ResponseEntity.status(201).body(claimService.createClaim(request));
+    @ResponseStatus(HttpStatus.CREATED)
+    public Mono<ClaimResponseDTO> create(@Valid @RequestBody ClaimRequestDTO request) {
+        return claimService.createClaim(request);
     }
 
     @GetMapping
-    public ResponseEntity<List<ClaimResponseDTO>> getAll() {
-        return ResponseEntity.ok(claimService.findAll());
+    public Flux<ClaimResponseDTO> getAll() {
+        return claimService.findAll();
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}/approve")
-    public ResponseEntity<ClaimResponseDTO> approve(@PathVariable Long id) {
-        return ResponseEntity.ok(claimService.approve(id));
+    public Mono<ClaimResponseDTO> approve(@PathVariable Long id) {
+        return claimService.approve(id);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}/reject")
-    public ResponseEntity<ClaimResponseDTO> reject(@PathVariable Long id) {
-        return ResponseEntity.ok(claimService.reject(id));
+    public Mono<ClaimResponseDTO> reject(@PathVariable Long id) {
+        return claimService.reject(id);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteClaim(@PathVariable Long id) {
-        claimService.deleteClaim(id);
-        return ResponseEntity.noContent().build();
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public Mono<Void> deleteClaim(@PathVariable Long id) {
+        return claimService.deleteClaim(id);
     }
 }

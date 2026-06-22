@@ -1,8 +1,6 @@
 package ec.edu.espe.backend.service.impl;
 
 import ec.edu.espe.backend.domain.LostItem;
-import ec.edu.espe.backend.domain.User;
-import ec.edu.espe.backend.domain.enums.ItemStatus;
 import ec.edu.espe.backend.dto.LostItemRequestDTO;
 import ec.edu.espe.backend.dto.LostItemResponseDTO;
 import ec.edu.espe.backend.exception.InvalidItemStateException;
@@ -12,147 +10,204 @@ import ec.edu.espe.backend.repository.LostItemRepository;
 import ec.edu.espe.backend.repository.UserRepository;
 import ec.edu.espe.backend.security.UserPrincipal;
 import ec.edu.espe.backend.service.LostItemService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.time.LocalDateTime;
 
+/**
+ * Implementación reactiva del servicio de objetos perdidos.
+ * Usa ReactiveSecurityContextHolder para obtener el usuario autenticado
+ * (reemplaza SecurityContextHolder que es bloqueante/thread-local).
+ */
 @Service
 public class LostItemServiceImpl implements LostItemService {
 
-    @Autowired private LostItemRepository itemRepository;
-    @Autowired private UserRepository userRepository;
+    private final LostItemRepository itemRepository;
+    private final UserRepository userRepository;
 
-    @Override
-    public LostItemResponseDTO createItem(LostItemRequestDTO request) {
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-
-        LostItem item = new LostItem();
-        item.setName(request.getName());
-        item.setDescription(request.getDescription());
-        item.setCategory(request.getCategory());
-        item.setLocationFound(request.getLocationFound());
-        item.setDateFound(request.getDateFound());
-        item.setImageUrl(request.getImageUrl());
-        item.setUser(user);
-
-        return mapToDTO(itemRepository.save(item));
+    public LostItemServiceImpl(LostItemRepository itemRepository, UserRepository userRepository) {
+        this.itemRepository = itemRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
-    public List<LostItemResponseDTO> getAllActiveItems() {
-        return itemRepository.findByActiveTrue().stream()
-                .map(this::mapToDTO).collect(Collectors.toList());
+    public Mono<LostItemResponseDTO> createItem(LostItemRequestDTO request) {
+        return userRepository.findById(request.getUserId())
+                .switchIfEmpty(Mono.error(new RuntimeException("Usuario no encontrado")))
+                .flatMap(user -> {
+                    LostItem item = new LostItem();
+                    item.setName(request.getName());
+                    item.setDescription(request.getDescription());
+                    item.setCategory(request.getCategory());
+                    item.setLocationFound(request.getLocationFound());
+                    item.setDateFound(request.getDateFound());
+                    item.setImageUrl(request.getImageUrl());
+                    item.setUserId(user.getId());
+                    LocalDateTime now = LocalDateTime.now();
+                    item.setCreatedAt(now);
+                    item.setUpdatedAt(now);
+                    return itemRepository.save(item)
+                            .map(saved -> mapToDTO(saved, user.getName(), user.getId()));
+                });
     }
 
     @Override
-    public LostItemResponseDTO getItemById(Long id) {
-        return mapToDTO(getActiveItem(id));
+    public Flux<LostItemResponseDTO> getAllActiveItems() {
+        // Para cada item, resolvemos el nombre del usuario de forma reactiva
+        return itemRepository.findByActiveTrue()
+                .flatMap(item -> userRepository.findById(item.getUserId())
+                        .map(user -> mapToDTO(item, user.getName(), user.getId()))
+                        .defaultIfEmpty(mapToDTO(item, "Desconocido", item.getUserId())));
     }
 
     @Override
-    public LostItemResponseDTO claimItem(Long id) {
-        LostItem item = getActiveItem(id);
-        if (item.getStatus() != ItemStatus.FOUND) {
-            throw new InvalidItemStateException("El objeto ya fue reclamado o entregado.");
-        }
-        item.setStatus(ItemStatus.CLAIMED);
-        return mapToDTO(itemRepository.save(item));
+    public Mono<LostItemResponseDTO> getItemById(Long id) {
+        return getActiveItem(id)
+                .flatMap(item -> userRepository.findById(item.getUserId())
+                        .map(user -> mapToDTO(item, user.getName(), user.getId()))
+                        .defaultIfEmpty(mapToDTO(item, "Desconocido", item.getUserId())));
     }
 
     @Override
-    public LostItemResponseDTO deliverItem(Long id) {
-        LostItem item = getActiveItem(id);
-        if (item.getStatus() != ItemStatus.CLAIMED) {
-            throw new InvalidItemStateException("El objeto debe ser reclamado antes de entregarse.");
-        }
-        item.setStatus(ItemStatus.DELIVERED);
-        item.setActive(false);
-        return mapToDTO(itemRepository.save(item));
+    public Mono<LostItemResponseDTO> claimItem(Long id) {
+        return getActiveItem(id)
+                .flatMap(item -> {
+                    if (!"FOUND".equals(item.getStatus())) {
+                        return Mono.error(new InvalidItemStateException("El objeto ya fue reclamado o entregado."));
+                    }
+                    item.setStatus("CLAIMED");
+                    item.setUpdatedAt(LocalDateTime.now());
+                    return itemRepository.save(item);
+                })
+                .flatMap(this::enrichDTO);
     }
 
     @Override
-    public LostItemResponseDTO updateItem(Long id, LostItemRequestDTO request) {
-        LostItem item = getActiveItem(id);
-
-        // Verificar propiedad: solo el dueño o un ADMIN pueden editar
-        User currentUser = getAuthenticatedUser();
-        boolean isAdmin = currentUser.getRole() == User.Role.ADMIN;
-        if (!isAdmin && !currentUser.getId().equals(item.getUser().getId())) {
-            throw new UnauthorizedOperationException("Solo el creador del objeto o un administrador puede editarlo.");
-        }
-
-        if (request.getName() != null && !request.getName().isBlank()) {
-            item.setName(request.getName());
-        }
-        if (request.getDescription() != null) {
-            item.setDescription(request.getDescription());
-        }
-        if (request.getCategory() != null && !request.getCategory().isBlank()) {
-            item.setCategory(request.getCategory());
-        }
-        if (request.getLocationFound() != null) {
-            item.setLocationFound(request.getLocationFound());
-        }
-        if (request.getDateFound() != null) {
-            item.setDateFound(request.getDateFound());
-        }
-        if (request.getImageUrl() != null) {
-            item.setImageUrl(request.getImageUrl());
-        }
-        return mapToDTO(itemRepository.save(item));
+    public Mono<LostItemResponseDTO> deliverItem(Long id) {
+        return getActiveItem(id)
+                .flatMap(item -> {
+                    if (!"CLAIMED".equals(item.getStatus())) {
+                        return Mono.error(new InvalidItemStateException("El objeto debe ser reclamado antes de entregarse."));
+                    }
+                    item.setStatus("DELIVERED");
+                    item.setActive(false);
+                    item.setUpdatedAt(LocalDateTime.now());
+                    return itemRepository.save(item);
+                })
+                .flatMap(this::enrichDTO);
     }
 
     @Override
-    public void deleteItem(Long id) {
-        LostItem item = getActiveItem(id);
-        item.setActive(false);
-        itemRepository.save(item);
+    public Mono<LostItemResponseDTO> updateItem(Long id, LostItemRequestDTO request) {
+        return getActiveItem(id)
+                .flatMap(item -> getAuthenticatedUser()
+                        .flatMap(currentUser -> {
+                            boolean isAdmin = "ADMIN".equals(currentUser.getRoleValue());
+                            if (!isAdmin && !currentUser.getId().equals(item.getUserId())) {
+                                return Mono.error(new UnauthorizedOperationException(
+                                        "Solo el creador del objeto o un administrador puede editarlo."));
+                            }
+                            if (request.getName() != null && !request.getName().isBlank()) {
+                                item.setName(request.getName());
+                            }
+                            if (request.getDescription() != null) {
+                                item.setDescription(request.getDescription());
+                            }
+                            if (request.getCategory() != null && !request.getCategory().isBlank()) {
+                                item.setCategory(request.getCategory());
+                            }
+                            if (request.getLocationFound() != null) {
+                                item.setLocationFound(request.getLocationFound());
+                            }
+                            if (request.getDateFound() != null) {
+                                item.setDateFound(request.getDateFound());
+                            }
+                            if (request.getImageUrl() != null) {
+                                item.setImageUrl(request.getImageUrl());
+                            }
+                            item.setUpdatedAt(LocalDateTime.now());
+                            return itemRepository.save(item);
+                        }))
+                .flatMap(this::enrichDTO);
     }
 
     @Override
-    public void uploadImage(Long id, MultipartFile file) throws IOException {
-        LostItem item = getActiveItem(id);
-        item.setImageData(file.getBytes());
-        item.setImageType(file.getContentType());
-        itemRepository.save(item);
+    public Mono<Void> deleteItem(Long id) {
+        return getActiveItem(id)
+                .flatMap(item -> {
+                    item.setActive(false);
+                    item.setUpdatedAt(LocalDateTime.now());
+                    return itemRepository.save(item);
+                })
+                .then();
+    }
+
+    /**
+     * Sube una imagen usando FilePart (WebFlux) en vez de MultipartFile (Servlet).
+     * Lee los bytes de forma reactiva con DataBufferUtils.
+     */
+    @Override
+    public Mono<Void> uploadImage(Long id, FilePart filePart) {
+        return getActiveItem(id)
+                .flatMap(item ->
+                    DataBufferUtils.join(filePart.content())
+                            .flatMap(dataBuffer -> {
+                                byte[] bytes = new byte[dataBuffer.readableByteCount()];
+                                dataBuffer.read(bytes);
+                                DataBufferUtils.release(dataBuffer);
+                                item.setImageData(bytes);
+                                item.setImageType(filePart.headers().getContentType() != null
+                                        ? filePart.headers().getContentType().toString()
+                                        : "image/jpeg");
+                                item.setUpdatedAt(LocalDateTime.now());
+                                return itemRepository.save(item).then();
+                            })
+                );
     }
 
     @Override
-    public byte[] getImageBytes(Long id) {
+    public Mono<byte[]> getImageBytes(Long id) {
         return itemRepository.findById(id)
-                .map(LostItem::getImageData)
-                .orElseThrow(() -> new ItemNotFoundException("Objeto no encontrado."));
+                .switchIfEmpty(Mono.error(new ItemNotFoundException("Objeto no encontrado.")))
+                .map(LostItem::getImageData);
     }
 
     @Override
-    public String getImageContentType(Long id) {
+    public Mono<String> getImageContentType(Long id) {
         return itemRepository.findById(id)
-                .map(LostItem::getImageType)
-                .orElse("image/jpeg");
+                .map(item -> item.getImageType() != null ? item.getImageType() : "image/jpeg")
+                .defaultIfEmpty("image/jpeg");
     }
 
-    // ── helpers ──────────────────────────────────────────────────────────────
+    // ── Helpers ──
 
-    private LostItem getActiveItem(Long id) {
+    private Mono<LostItem> getActiveItem(Long id) {
         return itemRepository.findByIdAndActiveTrue(id)
-                .orElseThrow(() -> new ItemNotFoundException("Objeto no encontrado o inactivo."));
+                .switchIfEmpty(Mono.error(new ItemNotFoundException("Objeto no encontrado o inactivo.")));
     }
 
-    /** Obtiene el usuario autenticado desde el JWT (SecurityContextHolder) */
-    private User getAuthenticatedUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        UserPrincipal principal = (UserPrincipal) auth.getPrincipal();
-        return principal.getUser();
+    /**
+     * Obtiene el usuario autenticado desde ReactiveSecurityContextHolder
+     * (reemplaza SecurityContextHolder que es thread-local/bloqueante).
+     */
+    private Mono<ec.edu.espe.backend.domain.User> getAuthenticatedUser() {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(ctx -> (UserPrincipal) ctx.getAuthentication().getPrincipal())
+                .map(UserPrincipal::getUser);
     }
 
-    private LostItemResponseDTO mapToDTO(LostItem item) {
+    private Mono<LostItemResponseDTO> enrichDTO(LostItem item) {
+        return userRepository.findById(item.getUserId())
+                .map(user -> mapToDTO(item, user.getName(), user.getId()))
+                .defaultIfEmpty(mapToDTO(item, "Desconocido", item.getUserId()));
+    }
+
+    private LostItemResponseDTO mapToDTO(LostItem item, String reporterName, Long reporterId) {
         LostItemResponseDTO dto = new LostItemResponseDTO();
         dto.setId(item.getId());
         dto.setName(item.getName());
@@ -163,8 +218,8 @@ public class LostItemServiceImpl implements LostItemService {
         dto.setStatus(item.getStatus());
         dto.setImageUrl(item.getImageUrl());
         dto.setHasImage(item.getImageData() != null && item.getImageData().length > 0);
-        dto.setReporterName(item.getUser().getName());
-        dto.setReporterId(item.getUser().getId());
+        dto.setReporterName(reporterName);
+        dto.setReporterId(reporterId);
         return dto;
     }
 }

@@ -3,37 +3,31 @@ package ec.edu.espe.backend.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.bind.support.WebExchangeBindException;
 
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Manejo global de excepciones — compatible con WebFlux.
+ * WebExchangeBindException reemplaza a MethodArgumentNotValidException.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /** Contraseña o correo incorrectos */
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Map<String, String>> handleBadCredentials(BadCredentialsException ex) {
-        return buildResponse(HttpStatus.UNAUTHORIZED, "Correo o contraseña incorrectos.");
+        return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
-    /** Cuenta desactivada */
-    @ExceptionHandler(DisabledException.class)
-    public ResponseEntity<Map<String, String>> handleDisabled(DisabledException ex) {
-        return buildResponse(HttpStatus.FORBIDDEN, "La cuenta está desactivada. Contacta al administrador.");
-    }
-
-    /** Acción no autorizada (ej: editar objeto ajeno) */
     @ExceptionHandler(UnauthorizedOperationException.class)
     public ResponseEntity<Map<String, String>> handleUnauthorized(UnauthorizedOperationException ex) {
         return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage());
     }
 
-    /** Acceso denegado por Spring Security (@PreAuthorize) */
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, String>> handleAccessDenied(AccessDeniedException ex) {
         return buildResponse(HttpStatus.FORBIDDEN, "No tienes permisos para realizar esta acción.");
@@ -49,8 +43,9 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException ex) {
+    // WebFlux usa WebExchangeBindException en vez de MethodArgumentNotValidException
+    @ExceptionHandler(WebExchangeBindException.class)
+    public ResponseEntity<Map<String, String>> handleValidation(WebExchangeBindException ex) {
         String message = ex.getBindingResult().getFieldErrors().stream()
                 .findFirst()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
@@ -58,7 +53,6 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, message);
     }
 
-    /** Fallback genérico */
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleGeneric(RuntimeException ex) {
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno del servidor.");

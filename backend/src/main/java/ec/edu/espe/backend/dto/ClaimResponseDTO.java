@@ -1,16 +1,18 @@
 package ec.edu.espe.backend.dto;
 
-import ec.edu.espe.backend.domain.Claim;
-import ec.edu.espe.backend.domain.enums.ClaimStatus;
-
 import java.time.LocalDateTime;
 
+/**
+ * DTO de respuesta para reclamos.
+ * En R2DBC no hay lazy loading, así que los datos de usuario e item
+ * se resuelven manualmente en el servicio y se pasan al constructor/factory.
+ */
 public class ClaimResponseDTO {
 
     private Long id;
     private LocalDateTime claimDate;
     private String observation;
-    private ClaimStatus status;
+    private String status;
     private Long userId;
     private String userName;
     private String userEmail;
@@ -20,116 +22,40 @@ public class ClaimResponseDTO {
     private String itemCategory;
     private String itemLocation;
 
-    public static ClaimResponseDTO from(Claim claim) {
-        ClaimResponseDTO dto = new ClaimResponseDTO();
-        dto.setId(claim.getId());
-        dto.setClaimDate(claim.getClaimDate());
-        dto.setObservation(claim.getObservation());
-        dto.setStatus(claim.getStatus());
-        dto.setUserId(claim.getUser().getId());
-        dto.setUserName(claim.getUser().getName());
-        dto.setUserEmail(claim.getUser().getEmail());
-        dto.setItemId(claim.getItem().getId());
-        dto.setItemName(claim.getItem().getName());
-        dto.setItemStatus(String.valueOf(claim.getItem().getStatus()));
-        dto.setItemCategory(claim.getItem().getCategory());
-        dto.setItemLocation(claim.getItem().getLocationFound());
-        return dto;
-    }
+    // Getters y Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public Long getId() {
-        return id;
-    }
+    public LocalDateTime getClaimDate() { return claimDate; }
+    public void setClaimDate(LocalDateTime claimDate) { this.claimDate = claimDate; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getObservation() { return observation; }
+    public void setObservation(String observation) { this.observation = observation; }
 
-    public LocalDateTime getClaimDate() {
-        return claimDate;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public void setClaimDate(LocalDateTime claimDate) {
-        this.claimDate = claimDate;
-    }
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
 
-    public String getObservation() {
-        return observation;
-    }
+    public String getUserName() { return userName; }
+    public void setUserName(String userName) { this.userName = userName; }
 
-    public void setObservation(String observation) {
-        this.observation = observation;
-    }
+    public String getUserEmail() { return userEmail; }
+    public void setUserEmail(String userEmail) { this.userEmail = userEmail; }
 
-    public ClaimStatus getStatus() {
-        return status;
-    }
+    public Long getItemId() { return itemId; }
+    public void setItemId(Long itemId) { this.itemId = itemId; }
 
-    public void setStatus(ClaimStatus status) {
-        this.status = status;
-    }
+    public String getItemName() { return itemName; }
+    public void setItemName(String itemName) { this.itemName = itemName; }
 
-    public Long getUserId() {
-        return userId;
-    }
+    public String getItemStatus() { return itemStatus; }
+    public void setItemStatus(String itemStatus) { this.itemStatus = itemStatus; }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
+    public String getItemCategory() { return itemCategory; }
+    public void setItemCategory(String itemCategory) { this.itemCategory = itemCategory; }
 
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    public Long getItemId() {
-        return itemId;
-    }
-
-    public void setItemId(Long itemId) {
-        this.itemId = itemId;
-    }
-
-    public String getItemName() {
-        return itemName;
-    }
-
-    public void setItemName(String itemName) {
-        this.itemName = itemName;
-    }
-
-    public String getItemStatus() {
-        return itemStatus;
-    }
-
-    public void setItemStatus(String itemStatus) {
-        this.itemStatus = itemStatus;
-    }
-
-    public String getUserEmail() {
-        return userEmail;
-    }
-
-    public void setUserEmail(String userEmail) {
-        this.userEmail = userEmail;
-    }
-
-    public String getItemCategory() {
-        return itemCategory;
-    }
-
-    public void setItemCategory(String itemCategory) {
-        this.itemCategory = itemCategory;
-    }
-
-    public String getItemLocation() {
-        return itemLocation;
-    }
-
-    public void setItemLocation(String itemLocation) {
-        this.itemLocation = itemLocation;
-    }
+    public String getItemLocation() { return itemLocation; }
+    public void setItemLocation(String itemLocation) { this.itemLocation = itemLocation; }
 }

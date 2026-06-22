@@ -5,8 +5,9 @@ import ec.edu.espe.backend.dto.AuthResponseDTO;
 import ec.edu.espe.backend.dto.RegisterRequestDTO;
 import ec.edu.espe.backend.service.impl.AuthService;
 import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/auth")
@@ -20,13 +21,14 @@ public class AuthController {
 
     // POST /api/auth/register
     @PostMapping("/register")
-    public ResponseEntity<AuthResponseDTO> register(@Valid @RequestBody RegisterRequestDTO request) {
-        return ResponseEntity.status(201).body(authService.register(request));
+    @ResponseStatus(HttpStatus.CREATED)
+    public Mono<AuthResponseDTO> register(@Valid @RequestBody RegisterRequestDTO request) {
+        return authService.register(request);
     }
 
     // POST /api/auth/login
     @PostMapping("/login")
-    public ResponseEntity<AuthResponseDTO> login(@Valid @RequestBody AuthRequestDTO request) {
-        return ResponseEntity.ok(authService.login(request));
+    public Mono<AuthResponseDTO> login(@Valid @RequestBody AuthRequestDTO request) {
+        return authService.login(request);
     }
 }
