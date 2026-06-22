@@ -4,49 +4,57 @@ import ec.edu.espe.backend.domain.User;
 import ec.edu.espe.backend.repository.UserRepository;
 import ec.edu.espe.backend.service.UserService;
 import org.springframework.stereotype.Service;
-import java.util.List;
-import java.util.Optional;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
+/**
+ * Implementación reactiva del servicio de usuarios.
+ * Todas las operaciones son no bloqueantes con cadenas Mono/Flux.
+ */
 @Service
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
 
-    // Inyección por constructor
     public UserServiceImpl(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
     @Override
-    public User save(User user) {
-        // Verificar email único
-        if (userRepository.existsByEmail(user.getEmail())) {
-            throw new RuntimeException("Email ya registrado");
-        }
-        return userRepository.save(user);
+    public Mono<User> save(User user) {
+        // Verificar email único de forma reactiva
+        return userRepository.existsByEmail(user.getEmail())
+                .flatMap(exists -> {
+                    if (exists) {
+                        return Mono.error(new RuntimeException("Email ya registrado"));
+                    }
+                    return userRepository.save(user);
+                });
     }
 
     @Override
-    public Optional<User> findById(Long id) {
+    public Mono<User> findById(Long id) {
         return userRepository.findById(id);
     }
 
     @Override
-    public List<User> findAll() {
+    public Flux<User> findAll() {
         return userRepository.findAll();
     }
 
     @Override
-    public Optional<User> findByEmail(String email) {
+    public Mono<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
 
     @Override
-    public void deactivate(Long id) {
-        // Buscar y desactivar lógicamente
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-        user.setActive(false);
-        userRepository.save(user);
+    public Mono<Void> deactivate(Long id) {
+        return userRepository.findById(id)
+                .switchIfEmpty(Mono.error(new RuntimeException("Usuario no encontrado")))
+                .flatMap(user -> {
+                    user.setActive(false);
+                    return userRepository.save(user);
+                })
+                .then();
     }
 }

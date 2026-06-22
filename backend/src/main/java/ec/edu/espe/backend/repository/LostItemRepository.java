@@ -1,14 +1,22 @@
 package ec.edu.espe.backend.repository;
 
 import ec.edu.espe.backend.domain.LostItem;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.r2dbc.repository.Query;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-import java.util.List;
-import java.util.Optional;
-
+/**
+ * Repositorio reactivo de objetos perdidos.
+ */
 @Repository
-public interface LostItemRepository extends JpaRepository<LostItem, Long> {
-    List<LostItem> findByActiveTrue();
-    Optional<LostItem> findByIdAndActiveTrue(Long id);
+public interface LostItemRepository extends ReactiveCrudRepository<LostItem, Long> {
+
+    Flux<LostItem> findByActiveTrue();
+
+    Mono<LostItem> findByIdAndActiveTrue(Long id);
+
+    @Query("SELECT COUNT(*) FROM lost_items WHERE active = true AND status = :status")
+    Mono<Long> countByActiveTrueAndStatus(String status);
 }
