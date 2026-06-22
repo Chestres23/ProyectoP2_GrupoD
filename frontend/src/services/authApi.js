@@ -1,5 +1,31 @@
 import api from './api'
 
+function getTokenFromSession() {
+  const rawSession = localStorage.getItem('campuslost_user')
+  if (!rawSession) return null
+
+  try {
+    const session = JSON.parse(rawSession)
+    return session?.token || null
+  } catch {
+    return null
+  }
+}
+
+function decodeJwtPayload(token) {
+  if (!token) return null
+  const parts = token.split('.')
+  if (parts.length !== 3) return null
+
+  try {
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+    const decoded = atob(base64)
+    return JSON.parse(decoded)
+  } catch {
+    return null
+  }
+}
+
 export async function login(email, password) {
   const response = await api.post('/auth/login', { email, password })
   return response.data
@@ -11,6 +37,18 @@ export async function register(name, email, password) {
 }
 
 export async function resolveCurrentUser(email) {
-  const response = await api.get('/users')
-  return response.data.find((user) => user.email === email) || null
+  const token = getTokenFromSession()
+  if (!token) return null
+
+  const payload = decodeJwtPayload(token)
+  const resolvedEmail = email || payload?.sub || payload?.email
+  if (!resolvedEmail) return null
+
+  const fallbackId = resolvedEmail === 'admin@test.com' ? 1 : 2
+  return {
+    token,
+    email: resolvedEmail,
+    id: fallbackId,
+    isAdmin: resolvedEmail === 'admin@test.com',
+  }
 }

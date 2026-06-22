@@ -123,7 +123,7 @@ export default function ClaimsPanel() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const sessionUser = getSessionUser()
-  const isAdmin = sessionUser?.role === 'ADMIN'
+  const isAdmin = sessionUser?.isAdmin
 
   const loadClaims = async () => {
     setLoading(true)

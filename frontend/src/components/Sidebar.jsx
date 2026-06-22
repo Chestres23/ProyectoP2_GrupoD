@@ -18,8 +18,8 @@ export default function Sidebar({ onLogout, sessionUser }){
         <p className="mt-2 text-sm text-slate-300">Gestión de objetos perdidos y reclamos con control administrativo.</p>
         <div className="mt-4 rounded-2xl bg-white/10 p-4 ring-1 ring-white/10">
           <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Usuario</p>
-          <p className="mt-1 font-semibold">{sessionUser?.name || sessionUser?.email}</p>
-          <p className="text-sm text-slate-300">{sessionUser?.role === 'ADMIN' ? 'Administrador' : 'Usuario'}</p>
+          <p className="mt-1 font-semibold">{sessionUser?.name || sessionUser?.email || 'Invitado'}</p>
+          <p className="text-sm text-slate-300">{sessionUser?.isAdmin ? 'Administrador' : 'Usuario'}</p>
         </div>
       </div>
       <nav className="space-y-2 p-4">

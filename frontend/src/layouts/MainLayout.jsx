@@ -6,6 +6,7 @@ import { clearSessionUser, getSessionUser } from '../services/authStorage'
 export default function MainLayout(){
   const navigate = useNavigate()
   const sessionUser = getSessionUser()
+  const isAdmin = sessionUser?.isAdmin
 
   const handleLogout = () => {
     clearSessionUser()
@@ -21,7 +22,7 @@ export default function MainLayout(){
             <p className="text-sm font-medium uppercase tracking-[0.2em] text-sky-600">CampusLost</p>
             <h1 className="text-2xl font-black text-slate-950 sm:text-3xl">Panel de gestión de objetos perdidos</h1>
             <p className="mt-1 text-sm text-slate-500">
-              {sessionUser?.role === 'ADMIN'
+              {isAdmin
                 ? 'Vista administrativa para aprobar reclamos y revisar el historial.'
                 : 'Vista de usuario para registrar objetos y crear reclamos.'}
             </p>

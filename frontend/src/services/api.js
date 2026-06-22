@@ -20,4 +20,36 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const config = error.config
+    const maxRetries = 2
+
+    if (!config) {
+      return Promise.reject(error)
+    }
+
+    const status = error.response?.status
+    const shouldRetry =
+      error.message === 'Network Error' ||
+      error.code === 'ECONNABORTED' ||
+      error.code === 'ERR_NETWORK' ||
+      [502, 503, 504].includes(status)
+
+    if (!shouldRetry) {
+      return Promise.reject(error)
+    }
+
+    config.__retryCount = config.__retryCount || 0
+    if (config.__retryCount >= maxRetries) {
+      return Promise.reject(error)
+    }
+
+    config.__retryCount += 1
+    await new Promise((resolve) => setTimeout(resolve, 200 * config.__retryCount))
+    return api(config)
+  }
+)
+
 export default api

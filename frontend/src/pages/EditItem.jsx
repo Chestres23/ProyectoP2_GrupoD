@@ -20,13 +20,14 @@ export default function EditItem() {
 
   useEffect(() => {
     // Verificar que el usuario puede editar (dueño o admin)
-    if (!sessionUser) { navigate('/'); return }
+    if (!sessionUser?.token) { navigate('/'); return }
 
     const fetchItem = async () => {
       try {
         const item = await getItemById(id)
-        const isOwner = sessionUser.id === item.reporterId
-        const isAdmin = sessionUser.role === 'ADMIN'
+        const sessionUserId = sessionUser.id || sessionUser.sub || sessionUser.userId
+        const isOwner = sessionUserId === item.reporterId
+        const isAdmin = sessionUser?.isAdmin
         if (!isOwner && !isAdmin) {
           navigate('/objetos')
           return
@@ -64,7 +65,8 @@ export default function EditItem() {
     setSaving(true)
     setError('')
     try {
-      await updateItem(id, { ...form, userId: sessionUser.id })
+      const userId = sessionUser.id || sessionUser.sub || sessionUser.userId
+      await updateItem(id, { ...form, userId })
       if (imageFile) {
         await uploadImage(id, imageFile)
       }

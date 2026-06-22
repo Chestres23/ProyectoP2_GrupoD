@@ -20,9 +20,20 @@ export default function Dashboard(){
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
-        const [remoteItems, remoteClaims] = await Promise.all([listItems(), listClaims()])
-        setItems(remoteItems)
-        setClaims(remoteClaims)
+        const [itemsResult, claimsResult] = await Promise.allSettled([listItems(), listClaims()])
+
+        if (itemsResult.status === 'fulfilled') {
+          setItems(itemsResult.value)
+        }
+
+        if (claimsResult.status === 'fulfilled') {
+          setClaims(claimsResult.value)
+        }
+
+        if (itemsResult.status === 'rejected' && claimsResult.status === 'rejected') {
+          setItems(mockItems)
+          setClaims(mockClaims)
+        }
       } catch {
         setItems(mockItems)
         setClaims(mockClaims)

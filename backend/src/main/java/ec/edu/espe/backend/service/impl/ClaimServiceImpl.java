@@ -85,7 +85,7 @@ public class ClaimServiceImpl implements ClaimService {
     @Override
     public Flux<ClaimResponseDTO> findAll() {
         return claimRepository.findAllByActiveTrueOrderByClaimDateDesc()
-                .flatMap(this::enrichClaimDTO);
+                .concatMap(this::enrichClaimDTO);
     }
 
     @Override
