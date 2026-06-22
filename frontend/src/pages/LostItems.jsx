@@ -23,7 +23,8 @@ export default function LostItems() {
   const [items, setItems] = useState(mockItems)
   const [error, setError] = useState('')
   const sessionUser = getSessionUser()
-  const isAdmin = sessionUser?.role === 'ADMIN'
+  const sessionUserId = sessionUser?.id || sessionUser?.sub || sessionUser?.userId
+  const isAdmin = sessionUser?.isAdmin
 
   const loadItems = async () => {
     try {
@@ -55,7 +56,7 @@ export default function LostItems() {
 
   /** El botón "Editar" solo aparece si el usuario es dueño O es admin */
   const canEdit = (item) =>
-    isAdmin || sessionUser?.id === item.reporterId
+    isAdmin || (sessionUserId && sessionUserId === item.reporterId)
 
   return (
     <div className="space-y-6">

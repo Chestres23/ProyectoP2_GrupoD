@@ -58,9 +58,11 @@ public class LostItemServiceImpl implements LostItemService {
 
     @Override
     public Flux<LostItemResponseDTO> getAllActiveItems() {
-        // Para cada item, resolvemos el nombre del usuario de forma reactiva
+        // Para cada item, resolvemos el nombre del usuario de forma reactiva.
+        // Usamos concatMap para no disparar demasiadas consultas concurrentes que puedan romper
+        // el streaming de la respuesta en conexiones con muchos resultados.
         return itemRepository.findByActiveTrue()
-                .flatMap(item -> userRepository.findById(item.getUserId())
+                .concatMap(item -> userRepository.findById(item.getUserId())
                         .map(user -> mapToDTO(item, user.getName(), user.getId()))
                         .defaultIfEmpty(mapToDTO(item, "Desconocido", item.getUserId())));
     }

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
 
+const API_BASE = 'http://localhost:8080/api'
+
 export default function ReactiveMonitor() {
   const [stats, setStats] = useState(null)
   const [events, setEvents] = useState([])
@@ -9,9 +11,14 @@ export default function ReactiveMonitor() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const token = localStorage.getItem('token')
-        const res = await fetch('/api/reactive/claims/stats', {
-          headers: { 'Authorization': `Bearer ${token}` }
+        const rawSession = localStorage.getItem('campuslost_user')
+        const session = rawSession ? JSON.parse(rawSession) : null
+        const token = session?.token
+
+        const res = await fetch(`${API_BASE}/reactive/claims/stats`, {
+          headers: {
+            'Authorization': token ? `Bearer ${token}` : undefined
+          }
         })
         if (res.ok) {
           const data = await res.json()
@@ -33,7 +40,7 @@ export default function ReactiveMonitor() {
     // Usualmente se envía el token por URL (?token=) o se exime de seguridad la ruta SSE para lectura.
     // Aquí el backend tiene .pathMatchers("/reactive/**").permitAll() configurado.
     
-    const eventSource = new EventSource('/api/reactive/claims/stream')
+    const eventSource = new EventSource(`${API_BASE}/reactive/claims/stream`)
 
     eventSource.onmessage = (e) => {
       // Si recibimos mensaje default
@@ -62,7 +69,7 @@ export default function ReactiveMonitor() {
     try {
       // Abrimos una conexión SSE corta de 15 segundos hacia el endpoint de simulación
       // Esto arrancará el Flux.interval del backend.
-      const simSource = new EventSource('/api/reactive/claims/simulate')
+      const simSource = new EventSource(`${API_BASE}/reactive/claims/simulate`)
       simSource.addEventListener('simulated-event', (e) => {
         const data = JSON.parse(e.data)
         setEvents(prev => [data, ...prev].slice(0, 15))

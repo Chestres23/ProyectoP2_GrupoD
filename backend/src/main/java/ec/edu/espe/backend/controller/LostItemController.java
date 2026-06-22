@@ -13,6 +13,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ec.edu.espe.backend.service.impl.LostItemAuditService;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/items")
 public class LostItemController {
@@ -89,7 +91,8 @@ public class LostItemController {
 
     // ── Auditoría reactiva (Práctica 4) ──
     @PostMapping("/auditoria")
-    public Mono<String> ejecutarAuditoria() {
-        return auditService.ejecutarAuditoria();
+    public Mono<ResponseEntity<Map<String, String>>> ejecutarAuditoria() {
+        return auditService.ejecutarAuditoria()
+                .map(message -> ResponseEntity.ok(Map.of("message", message)));
     }
 }

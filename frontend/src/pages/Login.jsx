@@ -28,10 +28,18 @@ export default function Login() {
     setError('')
     try {
       const authResponse = await login(email, password)
-      setSessionUser({ token: authResponse.token, email })
-      const currentUser = await resolveCurrentUser(email)
-      if (!currentUser) throw new Error('No se pudo resolver el usuario autenticado.')
-      setSessionUser({ ...currentUser, token: authResponse.token })
+      const partialSession = { token: authResponse.token, email }
+      setSessionUser(partialSession)
+
+      try {
+        const currentUser = await resolveCurrentUser(email)
+        if (currentUser) {
+          setSessionUser({ ...currentUser, token: authResponse.token })
+        }
+      } catch (err) {
+        console.error('No se pudo resolver el usuario autenticado.', err)
+      }
+
       navigate('/')
     } catch (err) {
       clearSessionUser()
@@ -55,10 +63,18 @@ export default function Login() {
     setError('')
     try {
       const authResponse = await register(name, email, password)
-      setSessionUser({ token: authResponse.token, email })
-      const currentUser = await resolveCurrentUser(email)
-      if (!currentUser) throw new Error('No se pudo resolver el usuario registrado.')
-      setSessionUser({ ...currentUser, token: authResponse.token })
+      const partialSession = { token: authResponse.token, email }
+      setSessionUser(partialSession)
+
+      try {
+        const currentUser = await resolveCurrentUser(email)
+        if (currentUser) {
+          setSessionUser({ ...currentUser, token: authResponse.token })
+        }
+      } catch (err) {
+        console.error('No se pudo resolver el usuario registrado.', err)
+      }
+
       navigate('/')
     } catch (err) {
       clearSessionUser()

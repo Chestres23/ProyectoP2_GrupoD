@@ -30,14 +30,16 @@ export default function CreateItem() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!sessionUser?.id) {
+    if (!sessionUser?.token) {
       setError('Debes iniciar sesión para registrar un objeto.')
       return
     }
+
+    const userId = sessionUser.id
     setLoading(true)
     setError('')
     try {
-      const created = await createItem({ ...form, userId: sessionUser.id })
+      const created = await createItem({ ...form, userId })
       // Si hay imagen seleccionada, subirla al objeto recién creado
       if (imageFile && created?.id) {
         await uploadImage(created.id, imageFile)

@@ -30,8 +30,14 @@ export default function CreateClaim(){
   const handleSubmit = async (e)=>{
     e.preventDefault()
 
-    if (!sessionUser?.id) {
+    if (!sessionUser?.token) {
       setError('Debes iniciar sesión para crear un reclamo.')
+      return
+    }
+
+    const userId = sessionUser.id || sessionUser.sub || sessionUser.userId
+    if (!userId) {
+      setError('No se pudo obtener el identificador del usuario desde la sesión.')
       return
     }
 
@@ -40,7 +46,7 @@ export default function CreateClaim(){
 
     try {
       await createClaim({
-        userId: sessionUser.id,
+        userId,
         itemId: Number(itemId),
         observation
       })

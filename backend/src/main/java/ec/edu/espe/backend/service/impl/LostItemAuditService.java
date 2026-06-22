@@ -1,34 +1,40 @@
 package ec.edu.espe.backend.service.impl;
-
 import ec.edu.espe.backend.domain.LostItem;
 import ec.edu.espe.backend.repository.LostItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 public class LostItemAuditService {
+    private final LostItemRepository lostItemRepository;
 
-    @Autowired
-    private LostItemRepository lostItemRepository;
+    public LostItemAuditService(LostItemRepository lostItemRepository) {
+        this.lostItemRepository = lostItemRepository;
+    }
 
-    // Ejecuta auditoría reactiva con backpressure y retorna confirmación
     public Mono<String> ejecutarAuditoria() {
-        Flux<LostItem> flujo = lostItemRepository.findByActiveTrue()
+        return lostItemRepository.findByActiveTrue()
                 .filter(item -> "FOUND".equals(item.getStatus()))
-                .map(item -> {
+                .doOnSubscribe(subscription ->
+                        System.out.println("[Subscriber] Suscripción iniciada."))
+                .handle((item, sink) -> {
                     if (item.getCategory() == null || item.getCategory().isBlank()) {
-                        throw new IllegalStateException("Item inválido (sin categoría), id=" + item.getId());
+                        System.out.println("[onErrorContinue] Item inválido, id=" + item.getId());
+                        return;
                     }
-                    return item;
-                })
-                .onErrorResume(error -> {
-                    System.out.println("[onErrorResume] " + error.getMessage() + " — se omite y continúa.");
-                    return Flux.empty();
-                });
 
-        flujo.subscribe(new CustomSubscriber<>(3));
-        return Mono.just("Auditoría iniciada. Revisar logs del servidor.");
+                    System.out.println("[onNext] Procesado: " + item.getId());
+                    sink.next(item);
+                })
+                .count()
+                .map(totalProcesados -> {
+                    System.out.println("[onComplete] Flujo finalizado.");
+                    return "Auditoría completada. Total procesados: " + totalProcesados;
+                });
     }
 }
