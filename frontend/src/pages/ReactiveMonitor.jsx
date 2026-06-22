@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 
-const API_BASE = 'http://localhost:8080/api'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
 
 export default function ReactiveMonitor() {
   const [stats, setStats] = useState(null)
@@ -38,37 +38,34 @@ export default function ReactiveMonitor() {
     fetchStats()
   }
 
+  const handleEvent = (e) => {
+    if (!e?.data) return
+
+    try {
+      const data = JSON.parse(e.data)
+      pushEvent(data)
+    } catch (err) {
+      console.warn('SSE event no procesado', err)
+    }
+  }
+
   useEffect(() => {
     // SSE no permite enviar Headers de Autorización fácilmente con el EventSource nativo.
     // Usualmente se envía el token por URL (?token=) o se exime de seguridad la ruta SSE para lectura.
     // Aquí el backend tiene .pathMatchers("/reactive/**").permitAll() configurado.
-    
+
     const eventSource = new EventSource(`${API_BASE}/reactive/claims/stream`)
 
-    const handleEvent = (e) => {
-      try {
-        const data = JSON.parse(e.data)
-        pushEvent(data)
-      } catch (err) {
-        console.warn('SSE event no procesado', err)
-      }
-    }
-
+    eventSource.addEventListener('open', () => {
+      console.info('SSE conectado a /reactive/claims/stream')
+    })
     eventSource.addEventListener('message', handleEvent)
     eventSource.addEventListener('claim-event', handleEvent)
-
-    eventSource.addEventListener('simulated-event', (e) => {
-      try {
-        const data = JSON.parse(e.data)
-        setEvents(prev => [data, ...prev].slice(0, 15))
-      } catch (err) {
-        console.warn('SSE simulated-event no procesado', err)
-      }
-    })
+    eventSource.addEventListener('simulated-event', handleEvent)
 
     eventSource.onerror = (e) => {
-      console.error("SSE error", e)
-      eventSource.close()
+      console.error('SSE error', e)
+      // No cerrar manualmente aquí para permitir que EventSource rehaga la conexión.
     }
 
     return () => eventSource.close()
@@ -77,20 +74,17 @@ export default function ReactiveMonitor() {
   const toggleSimulation = async () => {
     setSimulating(true)
     try {
-      // Abrimos una conexión SSE corta de 15 segundos hacia el endpoint de simulación
-      // Esto arrancará el Flux.interval del backend.
       const simSource = new EventSource(`${API_BASE}/reactive/claims/simulate`)
-      simSource.addEventListener('simulated-event', (e) => {
-        const data = JSON.parse(e.data)
-        setEvents(prev => [data, ...prev].slice(0, 15))
-      })
-      
-      // Cerrar la simulación después de 15s para no saturar
+
+      simSource.addEventListener('simulated-event', handleEvent)
+      simSource.onerror = (e) => {
+        console.error('SSE simulation error', e)
+      }
+
       setTimeout(() => {
         simSource.close()
         setSimulating(false)
       }, 15000)
-
     } catch (err) {
       console.error(err)
       setSimulating(false)
