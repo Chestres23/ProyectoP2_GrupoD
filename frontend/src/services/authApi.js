@@ -44,11 +44,13 @@ export async function resolveCurrentUser(email) {
   const resolvedEmail = email || payload?.sub || payload?.email
   if (!resolvedEmail) return null
 
-  const fallbackId = resolvedEmail === 'admin@test.com' ? 1 : 2
+  const isAdmin = resolvedEmail === 'admin@test.com'
+  const fallbackId = isAdmin ? 1 : 2
   return {
     token,
     email: resolvedEmail,
     id: fallbackId,
-    isAdmin: resolvedEmail === 'admin@test.com',
+    role: isAdmin ? 'ADMIN' : 'USER',
+    isAdmin,
   }
 }

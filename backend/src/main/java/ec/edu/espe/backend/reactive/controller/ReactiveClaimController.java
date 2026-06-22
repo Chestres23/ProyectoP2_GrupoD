@@ -50,7 +50,7 @@ public class ReactiveClaimController {
         return reactiveClaimService.getEventStream()
                 .map(event -> ServerSentEvent.<ReactiveClaimEvent>builder()
                         .id(event.getEventId())
-                        .event("claim-event")
+                        .event("message")
                         .data(event)
                         .build());
     }

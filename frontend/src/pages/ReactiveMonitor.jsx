@@ -7,34 +7,37 @@ export default function ReactiveMonitor() {
   const [events, setEvents] = useState([])
   const [simulating, setSimulating] = useState(false)
 
-  // Polling de estadísticas (Async Mono en backend)
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const rawSession = localStorage.getItem('campuslost_user')
-        const session = rawSession ? JSON.parse(rawSession) : null
-        const token = session?.token
+  const fetchStats = async () => {
+    try {
+      const rawSession = localStorage.getItem('campuslost_user')
+      const session = rawSession ? JSON.parse(rawSession) : null
+      const token = session?.token
 
-        const res = await fetch(`${API_BASE}/reactive/claims/stats`, {
-          headers: {
-            'Authorization': token ? `Bearer ${token}` : undefined
-          }
-        })
-        if (res.ok) {
-          const data = await res.json()
-          setStats(data)
+      const res = await fetch(`${API_BASE}/reactive/claims/stats`, {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : undefined
         }
-      } catch (err) {
-        console.error('Error al obtener estadísticas', err)
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setStats(data)
       }
+    } catch (err) {
+      console.error('Error al obtener estadísticas', err)
     }
+  }
 
+  useEffect(() => {
     fetchStats()
     const interval = setInterval(fetchStats, 5000) // cada 5 seg
     return () => clearInterval(interval)
   }, [])
 
-  // Conexión SSE (EventSource) al hot stream
+  const pushEvent = (data) => {
+    setEvents(prev => [data, ...prev].slice(0, 15))
+    fetchStats()
+  }
+
   useEffect(() => {
     // SSE no permite enviar Headers de Autorización fácilmente con el EventSource nativo.
     // Usualmente se envía el token por URL (?token=) o se exime de seguridad la ruta SSE para lectura.
@@ -42,18 +45,25 @@ export default function ReactiveMonitor() {
     
     const eventSource = new EventSource(`${API_BASE}/reactive/claims/stream`)
 
-    eventSource.onmessage = (e) => {
-      // Si recibimos mensaje default
+    const handleEvent = (e) => {
+      try {
+        const data = JSON.parse(e.data)
+        pushEvent(data)
+      } catch (err) {
+        console.warn('SSE event no procesado', err)
+      }
     }
 
-    eventSource.addEventListener('claim-event', (e) => {
-      const data = JSON.parse(e.data)
-      setEvents(prev => [data, ...prev].slice(0, 15)) // Guardar los últimos 15 eventos
-    })
+    eventSource.addEventListener('message', handleEvent)
+    eventSource.addEventListener('claim-event', handleEvent)
 
     eventSource.addEventListener('simulated-event', (e) => {
-      const data = JSON.parse(e.data)
-      setEvents(prev => [data, ...prev].slice(0, 15))
+      try {
+        const data = JSON.parse(e.data)
+        setEvents(prev => [data, ...prev].slice(0, 15))
+      } catch (err) {
+        console.warn('SSE simulated-event no procesado', err)
+      }
     })
 
     eventSource.onerror = (e) => {

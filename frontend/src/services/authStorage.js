@@ -32,13 +32,14 @@ export function getSessionUser() {
       : typeof rawId === 'string' && /^\d+$/.test(rawId)
         ? Number(rawId)
         : undefined
-    const role = payload.role || 'USER'
+    const role = session.role || payload.role || (session.isAdmin ? 'ADMIN' : 'USER')
+    const isAdmin = role === 'ADMIN' || session.isAdmin === true
 
     return {
       token: session.token,
       ...payload,
       role,
-      isAdmin: role === 'ADMIN',
+      isAdmin,
       email: payload.sub || payload.email,
       id,
     }
@@ -62,6 +63,10 @@ export function setSessionUser(sessionUser) {
     } else {
       delete safeSession.id
     }
+  }
+
+  if (safeSession.isAdmin && !safeSession.role) {
+    safeSession.role = 'ADMIN'
   }
 
   localStorage.setItem(SESSION_KEY, JSON.stringify(safeSession))
