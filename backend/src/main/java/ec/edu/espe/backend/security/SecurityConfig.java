@@ -38,6 +38,7 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .pathMatchers("/auth/**").permitAll()
                         .pathMatchers("/reactive/**").permitAll()
+                        .pathMatchers("/api/reactive/**").permitAll()
                         .pathMatchers("/error").permitAll()
                         .anyExchange().authenticated()
                 )
