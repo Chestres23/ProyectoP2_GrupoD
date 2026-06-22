@@ -3,6 +3,7 @@ package ec.edu.espe.backend.controller;
 import ec.edu.espe.backend.dto.LostItemRequestDTO;
 import ec.edu.espe.backend.dto.LostItemResponseDTO;
 import ec.edu.espe.backend.service.LostItemService;
+import ec.edu.espe.backend.service.impl.LostItemAuditService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -19,6 +20,7 @@ import java.util.List;
 public class LostItemController {
 
     @Autowired private LostItemService service;
+    @Autowired private LostItemAuditService auditService;
 
     // ── CRUD base ──────────────────────────────────────────────────────────
 
@@ -84,4 +86,13 @@ public class LostItemController {
                 .header(HttpHeaders.CONTENT_TYPE, contentType != null ? contentType : "image/jpeg")
                 .body(data);
     }
+
+    // ── Auditoría reactiva (backpressure + resiliencia) ─────────────────────
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/auditoria")
+    public ResponseEntity<String> ejecutarAuditoria() {
+        auditService.ejecutarAuditoria();
+        return ResponseEntity.ok("Auditoría iniciada. Revisar logs del servidor.");
+    }
+
 }

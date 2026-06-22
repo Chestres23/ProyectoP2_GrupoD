@@ -1,6 +1,7 @@
 package ec.edu.espe.backend.repository;
 
 import ec.edu.espe.backend.domain.LostItem;
+import ec.edu.espe.backend.domain.enums.ItemStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,4 +12,5 @@ import java.util.Optional;
 public interface LostItemRepository extends JpaRepository<LostItem, Long> {
     List<LostItem> findByActiveTrue();
     Optional<LostItem> findByIdAndActiveTrue(Long id);
+    List<LostItem> findByStatus(ItemStatus status);
 }
