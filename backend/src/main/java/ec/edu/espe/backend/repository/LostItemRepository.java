@@ -15,6 +15,8 @@ public interface LostItemRepository extends ReactiveCrudRepository<LostItem, Lon
 
     Flux<LostItem> findByActiveTrue();
 
+    Flux<LostItem> findByActiveTrueOrderByIdAsc();
+
     Mono<LostItem> findByIdAndActiveTrue(Long id);
 
     @Query("SELECT COUNT(*) FROM lost_items WHERE active = true AND status = :status")
