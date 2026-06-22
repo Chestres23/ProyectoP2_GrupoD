@@ -1,14 +1,11 @@
 package ec.edu.espe.backend.service.impl;
 
 import ec.edu.espe.backend.domain.LostItem;
-import ec.edu.espe.backend.domain.enums.ItemStatus;
 import ec.edu.espe.backend.repository.LostItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
-
-import java.time.Duration;
-import java.util.List;
+import reactor.core.publisher.Mono;
 
 @Service
 public class LostItemAuditService {
@@ -16,11 +13,10 @@ public class LostItemAuditService {
     @Autowired
     private LostItemRepository lostItemRepository;
 
-    public void ejecutarAuditoria() {
-        List<LostItem> items = lostItemRepository.findByStatus(ItemStatus.FOUND);
-
-        Flux<LostItem> flujo = Flux.fromIterable(items)
-                .delayElements(Duration.ofMillis(500))
+    // Ejecuta auditoría reactiva con backpressure y retorna confirmación
+    public Mono<String> ejecutarAuditoria() {
+        Flux<LostItem> flujo = lostItemRepository.findByActiveTrue()
+                .filter(item -> "FOUND".equals(item.getStatus()))
                 .map(item -> {
                     if (item.getCategory() == null || item.getCategory().isBlank()) {
                         throw new IllegalStateException("Item inválido (sin categoría), id=" + item.getId());
@@ -33,5 +29,6 @@ public class LostItemAuditService {
                 });
 
         flujo.subscribe(new CustomSubscriber<>(3));
+        return Mono.just("Auditoría iniciada. Revisar logs del servidor.");
     }
 }

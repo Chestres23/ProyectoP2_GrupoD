@@ -11,15 +11,18 @@ import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import ec.edu.espe.backend.service.impl.LostItemAuditService;
 
 @RestController
 @RequestMapping("/items")
 public class LostItemController {
 
     private final LostItemService service;
+    private final LostItemAuditService auditService;
 
-    public LostItemController(LostItemService service) {
+    public LostItemController(LostItemService service, LostItemAuditService auditService) {
         this.service = service;
+        this.auditService = auditService;
     }
 
     // ── CRUD base ──
@@ -82,5 +85,11 @@ public class LostItemController {
                                     .header(HttpHeaders.CONTENT_TYPE, contentType)
                                     .body(data));
                 });
+    }
+
+    // ── Auditoría reactiva (Práctica 4) ──
+    @PostMapping("/auditoria")
+    public Mono<String> ejecutarAuditoria() {
+        return auditService.ejecutarAuditoria();
     }
 }
