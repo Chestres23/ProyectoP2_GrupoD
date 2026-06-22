@@ -1,6 +1,5 @@
 package ec.edu.espe.backend.dto;
 
-import ec.edu.espe.backend.domain.enums.ItemStatus;
 import java.time.LocalDate;
 
 public class LostItemResponseDTO {
@@ -10,99 +9,43 @@ public class LostItemResponseDTO {
     private String category;
     private String locationFound;
     private LocalDate dateFound;
-    private ItemStatus status;
+    private String status;
     private String imageUrl;
     private boolean hasImage;
     private String reporterName;
     private Long reporterId;
 
-    //Getters y Setters
+    // Getters y Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public Long getId() {
-        return id;
-    }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    public String getName() {
-        return name;
-    }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    public String getLocationFound() { return locationFound; }
+    public void setLocationFound(String locationFound) { this.locationFound = locationFound; }
 
-    public String getDescription() {
-        return description;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    public LocalDate getDateFound() { return dateFound; }
+    public void setDateFound(LocalDate dateFound) { this.dateFound = dateFound; }
 
-    public String getCategory() {
-        return category;
-    }
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
-    public void setCategory(String category) {
-        this.category = category;
-    }
+    public String getReporterName() { return reporterName; }
+    public void setReporterName(String reporterName) { this.reporterName = reporterName; }
 
-    public String getLocationFound() {
-        return locationFound;
-    }
+    public Long getReporterId() { return reporterId; }
+    public void setReporterId(Long reporterId) { this.reporterId = reporterId; }
 
-    public void setLocationFound(String locationFound) {
-        this.locationFound = locationFound;
-    }
-
-    public ItemStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(ItemStatus status) {
-        this.status = status;
-    }
-
-    public LocalDate getDateFound() {
-        return dateFound;
-    }
-
-    public void setDateFound(LocalDate dateFound) {
-        this.dateFound = dateFound;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
-
-    public String getReporterName() {
-        return reporterName;
-    }
-
-    public void setReporterName(String reporterName) {
-        this.reporterName = reporterName;
-    }
-
-    public Long getReporterId() {
-        return reporterId;
-    }
-
-    public void setReporterId(Long reporterId) {
-        this.reporterId = reporterId;
-    }
-
-    public boolean isHasImage() {
-        return hasImage;
-    }
-
-    public void setHasImage(boolean hasImage) {
-        this.hasImage = hasImage;
-    }
+    public boolean isHasImage() { return hasImage; }
+    public void setHasImage(boolean hasImage) { this.hasImage = hasImage; }
 }

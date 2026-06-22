@@ -5,7 +5,8 @@ const nav = [
   {to:'/', label:'Inicio'},
   {to:'/objetos', label:'Objetos extraviados'},
   {to:'/objetos/nuevo', label:'Registrar objeto'},
-  {to:'/reclamos', label:'Reclamos'}
+  {to:'/reclamos', label:'Reclamos'},
+  {to:'/monitor', label:'Monitor Reactivo'}
 ]
 
 export default function Sidebar({ onLogout, sessionUser }){

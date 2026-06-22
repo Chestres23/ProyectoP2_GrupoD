@@ -9,6 +9,7 @@ import CreateClaim from './pages/CreateClaim'
 import CreateItem from './pages/CreateItem'
 import EditItem from './pages/EditItem'
 import ClaimsPanel from './pages/ClaimsPanel'
+import ReactiveMonitor from './pages/ReactiveMonitor'
 import ProtectedRoute from './components/ProtectedRoute'
 import PublicRoute from './components/PublicRoute'
 
@@ -27,6 +28,7 @@ export default function App(){
           <Route path="objetos/:id/editar" element={<EditItem/>} />
           <Route path="reclamos/nuevo/:itemId" element={<CreateClaim/>} />
           <Route path="reclamos" element={<ClaimsPanel/>} />
+          <Route path="monitor" element={<ReactiveMonitor/>} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/login" replace />} />
